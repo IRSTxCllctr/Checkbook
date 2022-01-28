@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkbook and Budget Calculator</title>
+    <script>
+        //checking for dev
+        class Checkbook {
+            constructor() { //Checkbook constructor
+                this.checkBookRows = [] //creates an array
+            }
+            getSubtotal() //calls the "getSubtotal" function
+            {
+                let subtotal = 0.00;
+                for (let i = 0; i < this.checkBookRows.length; i++)
+                {
+                    subtotal += this.checkBookRows[i].cost;
+                }
+                return subtotal;
+            }
+
+        }
+        class Check {
+            constructor(date, check_num, item, budget_type, cost) { //creates a class called "Check" which has a date, check number, item, budget type, and cost.
+                this.date = date;
+                this.check_num = parseInt(check_num);
+                this.item = item;
+                this.budget_type = budget_type;
+                this.cost = parseFloat(cost);
+            }
+            nextCheckNum(){
+                return this.check_num + 1;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded",function (event){//an event listener that triggers whn the document is loaded.
+            let checkBook = new Checkbook();
+            console.log(event)
+
+            //assigns a constant variable that is the html for the checkbook row.
+            // const checkInputBtn = document.querySelector("#inpCheBtn")
+            // checkInputBtn.addEventListener("click",function (){
+            let filePath = null; //The code below allows for a file containing checks to be uploaded into the checkbook
+            const inputElement = document.getElementById("inputFile");
+            inputElement.addEventListener("change", handleFiles, false);
+            function handleFiles() {
+                filePath = this.files[0]; /* now you can work with the file list */
+                const reader = new FileReader();
+                reader.addEventListener("load", function(event){
+                    const checks = JSON.parse(reader.result)
+                    checks.checkBookRows.forEach(function (checkObject){
+                        let check = new Check(checkObject.date,checkObject.check_num,checkObject.item,checkObject.budget_type,checkObject.cost)
+                        checkBook.checkBookRows.push(check)
+                    })
+                    console.log(checks.checkBookRows)
+                    checkBook.checkBookRows.forEach(function (check){
+                        const newCheckRow =
+                            `<tr>
+                                <td>
+                                    <input type="date" class="dateofCheck" name="Date" value="${check.date}">
+                                </td>
+                                <td><input type="number" class="checkNum" step="1" min="501" name="CheckNum" value="${check.check_num}"></td>
+                                <td><input type="text" class="Item" name="ItemName" value="${check.item}"></td>
+                                <td><input type="list" list="BudgetList" name="BudgetList" class="bList" value="${check.budget_type}"></td>
+                                <td><span>$</span><input type="number" class="Cost" name="Cost" value="${check.cost}"><button type="button" >Save</button></td>
+                            </tr>`
+                        checkBookBody.insertAdjacentHTML("beforeend", newCheckRow)
+                    })//end of forEach
+                })
+                console.log(filePath)
+                reader.readAsText(filePath)
+            }
+            // })//end of input Checkbook button
+            function saveArray (content, fileName){ //creates a function that, when called, downloads the checks on the checkbook.
+                const a = document.createElement("a");
+                a.href = window.URL.createObjectURL(new Blob([content], {type: "text/plain"}));
+                a.download = fileName;
+                a.click();
+            }
+            const ledgerBtn = document.querySelector("button#ledger")//Outputs a ledger, along with downloading the checks present in the checkbook.
+            ledgerBtn.addEventListener("click", function (){//When the ledger button is clicked, it will cause the cude below it in the function to be executed.
+                const content = JSON.stringify(checkBook);
+                const outputArea = document.querySelector("#outputArea");
+                outputArea.value = content;
+                saveArray(content, "checkbookData.txt")
+            });
+
+            const summaryBtn = document.querySelector("button#summary")//Attaches numerous functions to the summary button that, when clicked, will add up the total cost of a specific budget type, before inserting the sum into the Summaries table.
+            summaryBtn.addEventListener("click", function (){
+                const housingLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Housing";
+                });
+                // console.log(housingLines)
+                var formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+                const housingTotal = formatter.format(arrayTotal(housingLines, "cost"));
+                console.log(housingTotal);
+                document.querySelector(".housingSum").textContent = housingTotal
+                const foodLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Food";
+                });
+                // console.log(foodLines)
+                const foodTotal = formatter.format(arrayTotal(foodLines, "cost"));
+                console.log(foodTotal);
+                document.querySelector(".foodSum").textContent = foodTotal
+                const clothingLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Clothing";
+                });
+                // console.log(clothingLines)
+                const clothingTotal = formatter.format(arrayTotal(clothingLines, "cost"));
+                console.log(clothingTotal);
+                document.querySelector(".clothingSum").textContent = clothingTotal
+                const utilitiesLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Utilities";
+                });
+                // console.log(utilitiesLines)
+                const utilitiesTotal = formatter.format(arrayTotal(utilitiesLines, "cost"));
+
+                console.log(utilitiesTotal);
+                document.querySelector(".utilitiesSum").textContent = utilitiesTotal
+                const transportationLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Transportation";
+                });
+                // console.log(transportationLines)
+                const transportationTotal = formatter.format(arrayTotal(transportationLines, "cost"));
+                console.log(transportationTotal);
+                document.querySelector(".transportationSum").textContent = transportationTotal
+                const entertainmentLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Entertainment";
+                });
+                //console.log(entertainmentLines)
+                const entertainmentTotal = formatter.format(arrayTotal(entertainmentLines, "cost"));
+                console.log(entertainmentTotal);
+                document.querySelector(".entSum").textContent = entertainmentTotal
+                const miscellaneousLines = checkBook.checkBookRows.filter( function(ledgerLine) {
+
+                    return ledgerLine.budget_type === "Miscellaneous";
+                });
+                //console.log(miscellaneousLines)
+                const miscTotal = formatter.format(arrayTotal(miscellaneousLines, "cost"));
+                console.log(miscTotal);
+                document.querySelector(".miscSum").textContent = miscTotal
+            })
+            const arrayTotal = function(array,  index){
+                const total = array.reduce(function(arrayTotal,nextItem){
+                    console.log(arrayTotal)
+                    console.log(nextItem)
+                    return arrayTotal + nextItem[index];
+                },0.0)
+                return total;
+            }
+
+            //const summaryBody = document.querySelector("td.summaryBody")
+            const checkBookBody = document.querySelector("#TableBody"); //defines the table body
+            checkBookBody.addEventListener("click", function (event){
+
+                if(event.target.matches("button")) { //checks to see if someone clicked a button.
+                    const tableRow = event.target.parentNode.parentNode;
+                    const date = tableRow.querySelector("input.dateofCheck").value;
+                    // console.log(date)
+                    const checkNum = tableRow.querySelector("input.checkNum").value;
+                    //console.log(checkNum)
+                    const Item = tableRow.querySelector("input.Item").value;
+                    //console.log(Item)
+                    const bList = tableRow.querySelector("Input.bList").value;
+                    // console.log(bList)
+                    const cost = tableRow.querySelector("Input.Cost").value;
+                    // console.log(cost)
+
+                    const check = new Check(date, checkNum, Item, bList, cost);
+                    let nextCheckNum = check.nextCheckNum()
+
+                    const newRow =  ` <tr>
+        <td>
+            <input type="date" class="dateofCheck" name="Date">
+        </td>
+        <td> <input type="number" class="checkNum" step="1" min="501" name="CheckNum" value="${nextCheckNum}"></td>
+        <td><input type="text" class="Item" name="ItemName"></td>
+        <td><input type="list" list="BudgetList" name="BudgetList" class="bList"></td>
+         <td><span>$</span><input type="number" class="Cost" name="Cost"><button type="button">Save</button></td>
+     </tr>`
+
+                    checkBookBody.insertAdjacentHTML("beforeend", newRow)
+
+                    checkBook.checkBookRows.push(check)
+                    // console.log(check)
+                    // console.log(check.cost)
+                    const subtotalText = document.querySelector("input#Subtotal")
+                    subtotalText.value = checkBook.getSubtotal().toFixed(2)
+                }
+            })
+
+
+
+        })
+    </script>
+</head>
+<body>
+
+<h1>Checkbook and Budget Calculator</h1>
+<button type="button" id="summary">Create Summary</button>
+<button type="button" id="ledger">Output Ledger</button>
+
+<datalist id="BudgetList">
+    <option value="Housing">
+    <option value="Food">
+    <option value="Clothing">
+    <option value="Utilities">
+    <option value="Transportation">
+    <option value="Entertainment">
+    <option value="Miscellaneous">
+</datalist>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Check #</th>
+        <th>Item</th>
+        <th>Budget Type</th>
+        <th>Cost</th>
+    </tr>
+    </thead>
+    <tbody id="TableBody">
+    <tr>
+        <td>
+            <input type="date" class="dateofCheck" name="Date">
+        </td>
+        <td> <input type="number" class="checkNum" step="1" min="501" name="CheckNum"></td>
+        <td><input type="text" class="Item" name="ItemName"></td>
+        <td><input type="text" list="BudgetList" name="BudgetList" class="bList"></td>
+        <td><span>$</span><input type="number" class="Cost" name="Cost"><button type="button">Save</button></td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="4"> </td>
+        <td colspan="1"><label>Subtotal</label><span>$</span><label for="Subtotal"><input type="number" id="Subtotal"></label></td>
+    </tr>
+    </tfoot>
+</table> <h2>Summaries</h2>
+<table border="1" class="summaryBody">
+    <tr>
+        <th>Housing</th>
+        <td class="housingSum"></td>
+    </tr>
+    <tr>
+        <th>Food</th>
+        <td class="foodSum"></td>
+    </tr>
+    <tr>
+        <th>Clothing</th>
+        <td class="clothingSum"></td>
+    </tr>
+    <tr>
+        <th>Utilities</th>
+        <td class="utilitiesSum"></td>
+    </tr>
+    <tr>
+        <th>Transport.</th>
+        <td class="transportationSum"></td>
+    </tr>
+    <tr>
+        <th>Entertainment</th>
+        <td class="entSum"></td>
+    </tr>
+    <tr>
+        <th>Miscellaneous</th>
+        <td class="miscSum"></td>
+    </tr>
+</table>
+<input type="file" id="inputFile">
+<textarea id="outputArea"></textarea>
+
+</body>
+</html>
